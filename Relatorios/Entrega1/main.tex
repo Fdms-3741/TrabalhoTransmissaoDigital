@@ -1,5 +1,6 @@
 \documentclass{article}
 
+
 \title{Análise de quantizadores de baixa resolução em sistemas Massive MIMO}
 \author{Fernando Dias}
 \date{}
@@ -8,7 +9,37 @@
 	\maketitle
 	
 	\section{Introdução}
-    Para atender a demanda de múltiplos usuários e atender as expectativas de taxas cada vez mais altas
-    
-    O trabalho~\cite{@}
+	Em canais de \textit{large scale fading}, sistemas de transmissão com apenas uma antena transmissora e uma antena receptora estão sujeitos as condições do canal em um determinado instante, o que pode prejudicar consideravelmente o desempenho dos sistemas de comunicação. Formas de contornar essa limitação consistem no uso de códigos que ou precisam que o sinal seja espalhado no tempo ou seja retransmitido em diversas frequências. Sistemas MIMO consistem na introdução de múltiplas antenas tem como objetivo fazer com que a comunicação aconteça em $h_{ij}$ canais que são independentes entre si, o que diminui a chance de erro de detecção. 
+
+	Para tecnologias como 5G e possivelmente o 6G, explora-se o conceito de \textit{massive} MIMO, que consiste em um uso massivo de antenas na estação base. Esse conceito visa explorar as mais altas frequências (tais como a \textit{mmWave}) que, por consequência, reduzem o tamanho da antena e com isso permitem que $\omega$
+
+	Um possível problema nesse tipo de sistema é a necessidade de utilizar conversores analógico-digitais (ADCs) de baixa resolução... 
+
+	Com isso, o trabalho de~\cite{li.etal_2017a} apresenta um método de estimação de canal que considera os efeitos não lineares dos ADCs na estimativa. O trabalho também estuda a performance do canal tanto em capacidade quanto em eficiência espectral. Minha proposta será replicar os 
+
+	Esse texto está organizado da seguinte forma:
+	Na seção~\ref{sec:modelo_sistema}, será 
+
+	\section{Modelo do sistema}
+	\label{sec:modelo_sistema}
+
+	Com isso, o sinal recebido pelo receptor possui a forma:
+	\begin{equation}
+		\vec{y}=\sqrt{\rho_t}H\vec{x}+\vec{\omega}
+		\label{eq:recepcao_sinal_mimo}
+	\end{equation}
+	Dado que o receptor tem $M$ antenas e o transmissor tem $N$ antenas, a matriz de canal complexa é $H\in\mathcal{C}(0,\sigma_n^2)^{M\times N}$
+
+
+	\section{Métricas de avaliação}
+	\label{sec:metricas_avaliacao}
+		
+
+	\section{Proposta de trabalho}
+	\label{sec:proposta_trabalho}
+
+
+	\bibliographystyle{ieeetr}
+	\bibliography{Trabalho}
+
 \end{document}
