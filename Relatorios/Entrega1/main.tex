@@ -14,17 +14,16 @@
 	\maketitle
 	
 	\section{Introdução}
-	Em canais de \textit{large scale fading}, sistemas de transmissão com apenas uma antena transmissora e uma antena receptora estão sujeitos as condições do canal em um determinado instante, o que pode prejudicar consideravelmente o desempenho dos sistemas de comunicação. Formas de contornar essa limitação consistem no uso de códigos que ou precisam que o sinal seja espalhado no tempo ou seja retransmitido em diversas frequências. Sistemas MIMO consistem na introdução de múltiplas antenas tem como objetivo fazer com que a comunicação aconteça em $h_{ij}$ canais que são independentes entre si, o que diminui a chance de erro de detecção. 
+	Em sistemas de transmissão com apenas uma antena transmissora e uma antena receptora, o sistema está sujeito as condições do canal em um determinado instante, o que em casos de \textit{deep fade} pode reduzir consideravelmente o desempenho. As dimensões exploradas para contornar esse problema até então são no tempo, com codificações do símbolo, e na frequência, com ODFM. Sistemas MIMO introduzem uma nova dimensão, a espacial, no processo de comunicação. Múltiplas antenas suficientemente espaçadas tem como objetivo fazer com que a comunicação aconteça simultâneamente em múltiplos canais que são independentes entre si, o que diminui a chance de erro de detecção. Uma outra vantagem de se ter múltiplas antenas é o \textit{beamforming}, que é o resultado de um atraso do sinal entre as antenas que permite que o sinal seja direcionado para uma região específica ao invés de ser omnidirecional.
 
-	Para tecnologias como 5G e possivelmente o 6G, explora-se o conceito de \textit{massive} MIMO, que consiste em um uso massivo de antenas na estação base. Esse conceito visa explorar as mais altas frequências (tais como a \textit{mmWave}) que, por consequência, reduzem o tamanho da antena e com isso permitem que $\omega$
+	Para tecnologias como 5G e possivelmente o 6G, explora-se o conceito de \textit{massive} MIMO, que consiste em um uso massivo de antenas na estação base. Esse conceito visa explorar comunicações em mais altas frequências (tais como a \textit{mmWave}) que, por consequência, reduzem o tamanho da antena e com isso permitem agregar dezenas ou centenas de antenas em um espaço viável. Esse processo tem inúmeras vantagens tais como o \textit{beamforming} bem estreito e a redução de potência por antena. Porém, a densidade de antenas promove desafios nos conversores analógico digital (ADC), que por ser replicada e condensada nesssa escala ela desperdiça muita energia. 
 
-	Um possível problema nesse tipo de sistema é a necessidade de utilizar conversores analógico-digitais (ADCs) de baixa resolução... 
+	Um possível problema nesse tipo de sistema é a necessidade de utilizar ADCs de baixa resolução para reduzir a complexidade, custo e gasto energético na cadeia de rádio-frequência. O caso particular de conversores de um bit pode ser implementado apenas com um comparador e assim permite que a rede não precise realizar controle de ganho. A consequência desse ADC é a presença de um componente não linear na resposta da recepção, que impactará tanto na estimação quanto na capacidade do canal.
 
-	Com isso, o trabalho de~\cite{li.etal_2017a} apresenta um método de estimação de canal que considera os efeitos não lineares dos ADCs na estimativa. O trabalho também estuda a performance do canal tanto em capacidade quanto em eficiência espectral.
-	Minha proposta será replicar os 
+	Com isso, o trabalho de~\cite{li.etal_2017a} apresenta um método de estimação de canal que considera os efeitos não lineares dos ADCs na estimativa. O trabalho propõe uma aproximação linear do processo de quantização e um estimador de canal que compensa o efeito das não-linearidades. Esse estimador é comparado com outros estimadores da literatura em relação a capacidade do canal e a eficiência espectral
 
 	Esse texto está organizado da seguinte forma:
-	Na seção~\ref{sec:modelo_sistema}, será discutido quais  
+	Na seção~\ref{sec:modelo_sistema}, será discutido quais são as formas 
 
 	\section{Modelo do sistema}
 	\label{sec:modelo_sistema}
