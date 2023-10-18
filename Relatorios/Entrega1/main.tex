@@ -1,5 +1,10 @@
 \documentclass{article}
 
+\usepackage{amsmath}
+\usepackage{amsfonts}
+
+\usepackage{MathMacros}
+
 
 \title{Análise de quantizadores de baixa resolução em sistemas Massive MIMO}
 \author{Fernando Dias}
@@ -15,10 +20,11 @@
 
 	Um possível problema nesse tipo de sistema é a necessidade de utilizar conversores analógico-digitais (ADCs) de baixa resolução... 
 
-	Com isso, o trabalho de~\cite{li.etal_2017a} apresenta um método de estimação de canal que considera os efeitos não lineares dos ADCs na estimativa. O trabalho também estuda a performance do canal tanto em capacidade quanto em eficiência espectral. Minha proposta será replicar os 
+	Com isso, o trabalho de~\cite{li.etal_2017a} apresenta um método de estimação de canal que considera os efeitos não lineares dos ADCs na estimativa. O trabalho também estuda a performance do canal tanto em capacidade quanto em eficiência espectral.
+	Minha proposta será replicar os 
 
 	Esse texto está organizado da seguinte forma:
-	Na seção~\ref{sec:modelo_sistema}, será 
+	Na seção~\ref{sec:modelo_sistema}, será discutido quais  
 
 	\section{Modelo do sistema}
 	\label{sec:modelo_sistema}
@@ -28,8 +34,8 @@
 		\vec{y}=\sqrt{\rho_t}H\vec{x}+\vec{\omega}
 		\label{eq:recepcao_sinal_mimo}
 	\end{equation}
-	Dado que o receptor tem $M$ antenas e o transmissor tem $N$ antenas, a matriz de canal complexa é $H\in\mathcal{C}(0,\sigma_n^2)^{M\times N}$
-
+	Dado que o receptor tem $M$ antenas e o transmissor tem $N$ antenas, a matriz de canal complexa é $H\in\mathbb{C}^{M\times N}$
+	
 
 	\section{Métricas de avaliação}
 	\label{sec:metricas_avaliacao}
