@@ -5,6 +5,8 @@
 
 \usepackage{MathMacros}
 
+\newcommand{\dB}{\text{dB}}
+\newcommand{\bpsHz}{\text{bit}/\text{s}/\text{Hz}}
 
 \title{Análise de quantizadores de baixa resolução em sistemas Massive MIMO}
 \author{Fernando Dias}
@@ -22,29 +24,196 @@
 
 	Com isso, o trabalho de~\cite{li.etal_2017a} apresenta um método de estimação de canal que considera os efeitos não lineares dos ADCs na estimativa. O trabalho propõe uma aproximação linear do processo de quantização e um estimador de canal que compensa o efeito das não-linearidades. Esse estimador é comparado com outros estimadores da literatura em relação a capacidade do canal e a eficiência espectral
 
-	Esse texto está organizado da seguinte forma:
-	Na seção~\ref{sec:modelo_sistema}, será discutido quais são as formas 
+	Esse texto fará a leitura e intepretação de~\cite{li.etal_2017a} e está organizado da seguinte forma:
+	Na seção~\ref{sec:modelo_sistema}, será discutido quais são os modelos envolvidos, o que incluem o processo de transmissão, o processo de equivalência da não-linearidade e o estimador de canal. 
+	Na seção~\ref{sec:metricas_avaliacao}, será discutido quais são as métricas de avaliação do sistema e dos outros modelos. 
+	Na seção~\ref{sec:resultados_do_artigo}, serão exibidos os resultados e as principais diferenças entre o método proposto e os demais. 
+	Finalmente, na seção~\ref{sec:conclusao} será discutido as considerações finais do trabalho.
+
+	Nesse trabalho, considera-se que:
+	Letras minúsculas em negrito são vetores e letras maiúsculas são matrizes,
+	$I_\alpha$ é a matriz identidade de tamanho $\alpha\times\alpha$ e
+	a operação $\vect{A}$ é a vetorização da matriz $A$.
 
 	\section{Modelo do sistema}
 	\label{sec:modelo_sistema}
+	
+	O artigo começa com a análise de um sistema MIMO, e como funciona a sua recepção e estimação de canal. O próximo passo é a discussão sobre o método de decomposição de Bussgang para encontrar uma relação linear equivalente de um processo não-linear, e como descrever o processo de recepção MIMO usando essa decomposição. Finalmente, o artigo mostra como é feita a estimação de canal e estimação do sinal.
 
-	Com isso, o sinal recebido pelo receptor possui a forma:
+	\subsection{Sistema MIMO}
+	\label{sec:modelo_sistema_mimo}
+
+	O processo de comunicação de um sistema MIMO consiste no uso de múltiplas antenas de transmissão e recepção. No caso de 5G, o sistema considera as antenas de transmissão como $K$ usuários que transmitem dados para uma mesma estação base com $M$ antenas. A condição de \textit{massive} MIMO nesse cenário se dá por $M\gg K\gg1$.   
+
+	O sinal de $K$ usuários é transmitido como um vetor $\xbf\in\Cset^{K}$ e a recepção pela estação base é dada pela expressão:
 	\begin{equation}
-		\vec{y}=\sqrt{\rho_t}H\vec{x}+\vec{\omega}
+		\ybf=\sqrt{\rho}H\xbf+\vec{\omega}
 		\label{eq:recepcao_sinal_mimo}
 	\end{equation}
-	Dado que o receptor tem $M$ antenas e o transmissor tem $N$ antenas, a matriz de canal complexa é $H\in\mathbb{C}^{M\times N}$
+	Na expressão acima, a matriz de canal complexa é $H\in\mathbb{C}^{M\times N}$. Em sistemas MIMO comuns assume-se que os canais são independentes, porém no \textit{massive} MIMO como as frequências trabalhadas são bem altas e por isso as antenas podem estar bem próximas, os canais vizinhos tendem a ter caminhos parecidos e com isso há a presença de alguma correlação entre os elementos de $H$. A correlação entre os canais é definida pela matriz de covariância $C_{\vect{H}}$. O modelo de canal utilizado portanto é $\vect{H}\sim\Ccal\Ncal(0,C_{\vect{H}})$. $\rho_t$ é o SNR de uplink na transmissão de dados.
+	
+	O quantizador seria o elemento que faria a conversão da recepção do símbolo (que é analógica) para um valor digital para processamento. A análise com $\ybf$ diretamente consiste em assumir que o ADC tem uma resolução infinita, o que esse artigo muda. A conversão de 1 bit é feita com um simples comparador, que em essência indica qual é o sinal da parte real e imaginária do número complexo. A operação é definida como $\Qcal(x)=\sign{\Re(x)}+j\sign{\Im(x)}$ e, quando recebe um vetor, é operada elemento-a-elemento. Assim, o sinal recebido $\rbf$ efetivamente é:
+	\begin{equation}
+		\rbf=\Qcal(\ybf)=\Qcal(\sqrt{\rho}H\xbf+\vec{\omega})
+		\label{eq:sinal_recebido_quantizado}
+	\end{equation}
+
+	\subsection{Estimação de canal}
+	
+	A estimação de canal é feita de modo similar a outros métodos: Envia-se uma sequência de símbolos piloto conhecidos pelo receptor para que ele possa usar os valores recebidos para estimar o canal. A representação em um sistema MIMO se dá na forma de uma matriz de pilotos $\Phi\in\Cset^{K\times \tau}$, em que $\tau$ é o tamanho da sequência. O resultado da transmissão dessa matriz pode ser representada como:
+
+	\begin{equation}
+		Y_p = \sqrt{\rho_p}H\Phi^T+N_p
+		\label{eq:recepcao_sinal_treinamento}
+	\end{equation}
+
+	Onde $Y_p,N_p\in\Cset^{M\times \tau}$.Uma condição para os pilotos é a ortogonalidade entre eles ($\Phi^T\Phi^*=\tau I_K$). Isso pode ser alcançado transmitindo por exemplo o vetor $\vec{\phi}_0=\begin{bmatrix}s_1&0&\dots&0\end{bmatrix}^T$ e em seguida $\vec{\phi}_1=\begin{bmatrix}0&s_1&0&\dots&0\end{bmatrix}^T$ e formar $\Phi=\begin{bmatrix}\vec{\phi}_0&\vec{\phi_1}&\dots&\vec{\phi}_K\end{bmatrix}$. Para seguir essa condição, fica implícito que $\tau\ge K$.  
+	
+	Na relação em~\eqref{eq:recepcao_sinal_treinamento}, o valor de $H$ é uma icógnita, e a equação como um todo pode ser reescrita na forma:
+	\begin{equation}
+		\vect{Y_t}=\bar{\Phibf}\vect{H}+\vect{H_t}
+		\label{eq:equacao_estimacao_canal}
+	\end{equation}		
+	Onde $\bar\Phibf=\Phi\otimes\sqrt{\phi_t}I_M$ e $\otimes$ é o produto de Kroneker para matrizes. Para melhor interpretar o que essa operação faz, mostramos um exemplo onde $M=3$, $K=2$ e $\phi_t=1$ para ver o que a função representa:
+	\begin{equation}
+		\begin{bmatrix}
+			y_{11}\\
+			y_{21}\\
+			y_{31}\\ 
+			\\ 
+			y_{12}\\
+			y_{22}\\
+			y_{32}\\
+		\end{bmatrix} 
+		= 
+		\begin{bmatrix}
+			\begin{bmatrix}
+				x_{11}&0&0\\
+				0&x_{11}&0\\ 
+				0&0&x_{11}
+			\end{bmatrix} & \begin{bmatrix}
+				x_{21}&0&0\\
+				0&x_{21}&0\\ 
+				0&0&x_{21} 
+			\end{bmatrix} \\
+			\\ 
+			\begin{bmatrix}
+				x_{12}&0&0\\
+				0&x_{12}&0\\ 
+				0&0&x_{12}
+			\end{bmatrix} & \begin{bmatrix}
+				x_{22}&0&0\\
+				0&x_{22}&0\\ 
+				0&0&x_{22} 
+			\end{bmatrix} \\
+		\end{bmatrix}
+		\begin{bmatrix}
+			h_{11}\\
+			h_{21}\\
+			h_{31}\\
+			\\ 
+			h_{12}\\
+			h_{22}\\
+			h_{32}\\
+		\end{bmatrix}
+	\end{equation}
+	Essa representação nada mais é do que um conjunto de sistemas de equações por antena receptora que resolvem as condições do canal, dado a saída de todas as entradas. Ela pode ser simplificada da seguinte forma:
+	\begin{equation}
+			\ybf_i = \Phi \hat\hbf_i,\;i\in\{0,1,\dots,M\}
+	\end{equation}
+	Onde $y_i\in\Cset^\tau$ é a recepção da antena $i$ e o vetor $h_i$ é a linha $i$ da matriz de canal H, que é a condição do canal para a antena $i$ da transmissão de todos os símbolos. 
+
+	\subsection{Estimador proposto}
+
+	O estimador proposto pelo artigo é um estimador que minimiza o erro médio quadrático da estimativa do canal e lineariza o processo de quantização dos símbolos através da decomposição de Bussgang. O objetivo dessa decomposição é encontrar o modelo linear equivalente em primeiro e segundo momento à um processo não linear assumindo que o sinal processado é gaussiano. O resultado é aproximar a recepção $\rbf$ da seguinte forma:
+
+	\begin{equation}
+		\rbf_p = Q(\ybf_p) \approx A_p\ybf_p + \qbf_p
+		\label{eq:decomposicao_bussgang}
+	\end{equation}
+	
+	O vetor $\qbf_p$ é o ruído gaussiano equivalente do processo não linear e a matriz $A_p$ é calculda de modo a ``minimizar a potência do ruído não linear em $\ybf_p$''. Uma consequência dessa decomposição é uma aproximação alcançada em~\cite{li.etal_2017a} que define qual a sequência piloto $\Phi$ que deve ser utilizada. Ao fazer a escolha apropriada de $\Phi$, a matriz $A_p$ pode ser aproximada para:
+
+	\begin{equation}
+		A_p \approx \sqrt{\frac{2}{\pi}\frac{1}{K\rho_p+1}}I_{M.\tau} = \alpha_p I_{M.\tau}
+		\label{eq:calculo_matriz_ap_simplificada}
+	\end{equation}
+
+	Com o valor de $\rbf_p$ calculado, o novo estimador de canal pode ser reescrito da forma:
+	
+	\begin{equation}
+		\hbfh^{\text{BLM}}=\Phit^H C_{\rbf_p}\rbf_p
+		\label{eq:estimador_bussgang}
+	\end{equation}
+	
+	\subsection{Características do estimador}
+
+	O trabalho de~\cite{li.etal_2017a} mostra que o erro médio quadrático de estimação do canal, definido por $\Mcal^{\text{BLM}}=\frac{1}{MK}\expval{||\hbfh-\hbf||^2_2}$, tem um limite inferior quanto maior o SNR. Mais especificamente $\lim_{\rho\to\infty}\Mcal^{\text{BLM}}=-4,40\;\dB$. Isso é uma consequência do processo de quantização, que introduz uma imprecisão não importa o quão bem recebido foi o sinal. O cálculo do erro médio quadrático será mais aprofundado na seção~\ref{sec:metricas_avaliacao}.
+	
+	O trabalho de~\cite{li.etal_2017a} também mostra como o caso de \textit{frequency selective fading} pode ser abordado ao implementar OFDM no processo de transmissão, o que é desenvolvido em uma seção mas não é explorado no resto do artigo.
+
+	Para calcular a correlação entre os canais, pode-se assumir uma aproximação quando o valor de SNR é baixo. O trabalho mostra que para baixos valores de SNR temos que
+	
+	\begin{equation}
+		\begin{split}
+			C_{\vect{\Hh}}^{\text{BLM}} & \approx\sigma^2I_{MK} \\ 
+			\sigma^2 & = (\alpha_p^2\tau\rho_p+\alpha^2_p+1-\frac{2}{\pi})
+		\end{split}
+		\label{eq:aproximacao_covariancia_canal_baixo_snr}
+	\end{equation}
+
+	\section{Avaliação e design do sistema}
+	\label{sec:metricas_avaliacao}
+
+	O trabalho de~\cite{li.etal_2017a} avalia o seu estimador e compara com outros estimadores da literatura de diferentes formas. As principais métricas utilizadas são o erro médio quadrático de estimação e a soma da eficiência espectral. As principais considerações de design do sistema são a eficiência energética 
+
+	\subsection{Design do receptor}
+
+	O processo de recepção é idêntica ao processo descrito na seção~\ref{sec:modelo_sistema_mimo}. A única coisa que falta é estimar o símbolo transmitido dado o resultado recebido, que para isso é necessário projetar um receptor $W$ no qual $\xh=W^T\rbf$. No artigo, são utilizados dois estimadores distintos: O \textit{Maximum Ratio Combining} (MRC) e o \textit{Zero Forcing} (ZF). Ambos estão representados abaixo
+	
+	\begin{equation}
+		\begin{split}
+			W_{\text{MRC}} & = \Hh^H\\ 
+			W_{\text{ZF}}  & = (\Hh^H\Hh)^{-1}\Hh^H
+		\end{split}
+		\label{eq:}
+	\end{equation}
+
+	\subsection{Métricas utilizadas}
+
+	O erro médio quadrático para o estimador proposto pode ser calculado como 
+	\begin{equation}
+		\Mcal^{\text{BLM}} = 1 - \frac{2K\rho_p}{\pi(K\rho_p+1)}
+		\label{eq:erro_medio_quadratico_estimador_proposto}
+	\end{equation}
+	Esse erro médio quadrático mostra a relação apresentada na seção anterior. Já a eficiência espectral é calculada como
+	\begin{equation}
+		\Scal_{A} = \frac{T-\tau}{T}\sum{R_{A,k}}
+		\label{eq:eficiencia_espectral_estimador_receptor_proposto}
+	\end{equation}
+	Onde $A\in{MRC,ZF}$ seleciona o receptor utilizado e $R_{A,k}$ é a capacidade para o k-ésimo usuário. Esse valor de capacidade é calculado de forma genérica em~\cite[eq. 42]{li.etal_2017a}, mas o próprio faz aproximações que dependem do receptor escolhido. O processo de cálculo da capacidade do canal está ligado à estimação do sinal recebido como dito na subseção anterior. O símbolo estimado do usuário $k$ acumula diversos erros, todos estão descritos na equação abaixo
+	\begin{alignat*}{3}
+		\xh_k  = & \sqrt{\rho_d}\wbf^T_k A_d \hbfh_{k} x_k &\;\;\;& \to\text{Sinal do k-ésimo usuário} \\
+		& + \sqrt{\rho_d}\wbf^T_k\sum^{K}_{i\neq k}A_d\hbfh_ix_i &\;\;\;& \to\text{Interferência entre usuários} \\
+		& + \sqrt{\rho_d}\wbf^T_k\sum^K_{i=1}A_d\ecal_ix_i &\;\;\;& \to\text{Erro de estimação do canal} \\ 
+		& + \wbf^T_kA_dn_d &\;\;\;& \to\text{Ruído AWGN do canal} \\ 
+		& + \wbf^T_k \qbf_d &\;\;\;& \to\text{Ruído de quantização}
+	\end{alignat*}
+	\label{eq:}
+
+	A partir daí, pode-se encontrar a capacidade do canal com a relação $R=\log_2(1+\text{SNR})$. São feitas aproximações do artigo quando se considera que o receptor é MRC ou ZF, e um dos resultados pretende determinar a acurácia dessas aproximações. 
+
+	\section{Resultados do artigo}
+	\label{sec:resultados_do_artigo}
+
 	
 
-	\section{Métricas de avaliação}
-	\label{sec:metricas_avaliacao}
-		
+	\section{Considerações finais}
+	\label{sec:conclusao}
 
-	\section{Proposta de trabalho}
-	\label{sec:proposta_trabalho}
-
+	Como próxima etapa, será investigado como é feita a implementação de outro estimador citado pelo artigo para realizar algumas das comparações por simulação. 
 
 	\bibliographystyle{ieeetr}
-	\bibliography{Trabalho}
+	\bibliography{Trabalho.bib}
 
 \end{document}
