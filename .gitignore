@@ -46,3 +46,6 @@
 .bak 
 .mtc
 build/
+
+# python
+.ipynb_checkpoints
