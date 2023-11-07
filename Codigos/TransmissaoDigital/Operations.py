@@ -30,7 +30,7 @@ def Quantizador(data):
     """
     return (np.sign(np.real(data))+1j*np.sign(np.imag(data)))/np.sqrt(2)
 
-def ReceptorZF(H_est,signal):
+def ReceptorZF(H_est,signal=None):
     """
     ReceptorZF(H_est,signal)
     Calcula o receptor ZF com base no `H_est` e o aplica no `signal`.
@@ -48,10 +48,13 @@ def ReceptorZF(H_est,signal):
     receptor = np.linalg.inv(np.matmul(H_est.H,H_est))
     receptor = np.matmul(receptor,H_est.H)
     
-    # Aplicacao do receptor ao resultado
-    return np.matmul(receptor[np.newaxis,:,:],np.swapaxes(signal,1,0)[:,:,np.newaxis])
+    if signal:
+        # Aplicacao do receptor ao resultado
+        return np.matmul(receptor[np.newaxis,:,:],np.swapaxes(signal,1,0)[:,:,np.newaxis])
     
-def ReceptorMRC(H_est,signal):
+    return receptor
+
+def ReceptorMRC(H_est,signal=None):
     """
     ReceptorMRC(H_est,signal)
     Descrição: 
@@ -65,6 +68,8 @@ def ReceptorMRC(H_est,signal):
     # Calculo do receptor
     receptor = H_est.H
     
-    # Aplicacao do receptor ao resultado
-    return np.matmul(receptor[np.newaxis,:,:],np.swapaxes(signal,1,0)[:,:,np.newaxis])
-
+    if signal:
+        # Aplicacao do receptor ao resultado
+        return np.matmul(receptor[np.newaxis,:,:],np.swapaxes(signal,1,0)[:,:,np.newaxis])
+    
+    return receptor
