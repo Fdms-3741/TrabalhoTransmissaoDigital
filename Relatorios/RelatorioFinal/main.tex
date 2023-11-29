@@ -1,0 +1,127 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc} 
+\usepackage[brazil]{babel}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\usepackage[ruled,portuguese]{algorithm2e}
+\SetKwComment{Comment}{/* }{ */}
+\SetKwInput{KwData}{Recebe}
+\SetKwInput{KwResult}{Retorna}
+
+
+% Usa as macros para vetores e matrizes
+\usepackage{MathMacros}
+
+\title{Relatório Final de Transmissão Digital}
+\author{Fernando Dias de Mello Silva}
+\date{6 de Dezembro 2023}
+
+\begin{document}
+
+\maketitle
+
+\section{Introdução}
+
+Esse relatório consiste na descrição das simulações e resultados obtidos do trabalho de~\cite{li.etal_2017a}. O trabalho consiste em avaliar o desempenho de estimadores de canal para o caso de sistemas \textit{massive} MIMO que fazem uso de quantizadores de 1 bit de resolução. A estimação de canal é feita com o uso da decomposição de Bussgang para obter um modelo linear estatísticamente equivalente do processo não linear de quantização. 
+
+As simulações foram feitas com o uso da linguagem \texttt{Python 3}, com o uso das bibliotecas \texttt{Numpy} para cálculos matriciais, \texttt{}
+
+Esse relatório está dividio da seguinte forma:
+Na seção~\ref{sec:ambiente_trabalho}, será apresentado o ambiente de simulação utilizado e as principais ferramentas, assim como formas de executar o código da simulação.
+Na seção~\ref{sec:fundamentos_mimo}, será demonstrado o processo de simulação de um sistema MIMO convencional e serão demonstrados algumas das características desse sistema com o uso da ferramenta para validar o ambiente.
+Na seção~\ref{sec:estimacao_canal}, será demonstrado quais as técnicas de estimação de canal utilizadas e qual o experimento feito para comparar as diferentes técnicas.
+Na seção~\ref{sec:capacidade_canal}, será apresentado os modelos de otimização que serão inseridos em um solver e os resultados equivalentes.
+
+Ao longo do trabalho, $\Cset$ é o conjunto dos números complexos e $\Rset$ o dos números reais. Vetores estão em negrito e são declarados como em $\xbf\in\Cset^{N}$. Matrizes, com $M$ linhas e $N$ colunas, estão em letras maiúsculas e são representadas como em $A\in\Rset^{M\times N}$. A função $\Vect{A}$ é a função de vetorização da matriz $A$. O operador $\otimes$ é o produto de Kroneker. A função $\Diag{\abf}$ é a função de diagonalização de um vetor $\abf$.  Quando um vetor ou uma matriz é aleatória, a notação $\sim$ indica a sua distribuição respectiva. $\Ncal(\mu,\sigma)$ é a distribuição normal no conjunto dos reais com média $\mu$ e desvio padrão $\sigma$, e a distribuição $\Ccal\Ncal(\mu,\sigma)$ é a distribuição normal complexa. 
+
+
+\section{Ambiente de trabalho}
+\label{sec:ambiente_trabalho}
+
+A simulação foi feita com o uso da linguagem de programação \texttt{Python 3}. As principais bibliotecas utilizadas são as bibliotecas \texttt{NumPy}, \texttt{CuPy} e \texttt{SciPy} para cálculos numéricos e funções executadas em GPU, a biblioteca \texttt{Pandas} para manipulação de tabelas de resultados, a biblioteca \texttt{cvxpy} para otimização convexa e as bibliotecas \texttt{Matplotlib} e \texttt{Seaborn} para visualização dos resultados. Todas as funções das bibliotecas, quando citadas, serão atribuídas com o nome da biblioteca seguido de um ponto antes do nome da função (por exemplo: \texttt{biblioteca.função}). Quando não houver citação da biblioteca utilizada em uma função, a função foi desenvolvida por mim.
+
+O ambiente de trabalho utilizado foi o \texttt{Jupyter}, esse ambiente permite a programação de ``\textit{notebooks}'' formados por uma estrutura de texto HTML e código que pode ser executado e interagido diretamente. A google oferece uma plataforma chamada Collab para a execução desses \textit{notebooks} em núvem. O código respectivo desse relatório está em um notebook do Collab\footnote{}.
+
+Os códigos, relatórios e outros materiais relacionados estão na minha página do github\footnote{https://github.com/Fdms-3741/TrabalhoTransmissaoDigital}.
+
+\section{Fundamentos de MIMO}
+\label{sec:fundamentos_mimo}
+
+Essa seção faz a implementação de casos mínimos e testa na sua testa valores diferentes de testa bem testada.
+
+\subsection{Definição das operações}
+
+Como visto no relatório anterior, temos que a transmissão MIMO de $\tau$ símbolos entre $K$ transmissores e $M$ receptores consiste na seguinte equação:
+\begin{equation}
+    Y = \sqrt\rho HS + W
+    \label{eq:transmissao_mimo}
+\end{equation}
+
+Em que $Y\in\Cset^{M\times\tau}$ são os símbolos recebidos pelos $M$ receptores, $S\in\Cset^{K\times\tau}$ são os símbolos transmitidos pelos $K$ transmissores, $W\in\Cset^{M\times\tau}\sim\Ccal\Ncal(0,1)$ é o ruído AWGN e $H\in\Cset^{M\times K}\sim\Ccal\Ncal(0,1)$ é a matriz de canal. 
+
+Os símbolos são gerados a partir de uma função \texttt{GerarBits(M,N)} que gera uma matriz $M\times N$ de bits $B$ e uma função \texttt{ModularQPSK(MatrizBits)} que recebe essa matriz de bits e retorna uma matriz $S$ com os símbolos correspondentes. Uma transmissão MIMO é feita pela função \texttt{TransmitirMIMO}, representada pelo algoritmo~\ref{alg:transmissao_mimo}.
+
+\begin{algorithm}
+    \label{alg:transmissao_mimo}
+    \caption{Função \texttt{TransmitirMIMO}}
+    \KwData{$H,\sbf,SNR$}
+    \KwResult{$\ybf$}
+    \Comment{Exemplo de comentário. Variáveis e operadores serão representados por notação matemática convencional.}
+    $\wbf \gets $GerarRuído(0,1)\;
+    $\rho \gets (10^{\frac{SNR}{10}})/K$\;
+    $\ybf \gets \sqrt{\rho}H\sbf+\wbf$\;
+\end{algorithm}
+
+Já a recepção para calcular o símbolo estimado $\hat{S}$ consiste em calcular o receptor $W^H$ com base na equação $\hat{S}=W^HY$ deve ser feita com um dos receptores propostos: o \textit{Zero Forcing} (ZF) pela equação $H^{H}$ e o \textit{Maximum Ratio Combining} (MRC) pela equação $(H^HH)^{-1}H^T$. Cada um deles é calculado pelas funções \texttt{CalcularReceptor(Nome,$H$)}, em que \texttt{Nome} define qual receptor é utilizado(``ZF'' ou ``MRC'') e $H$ é a matriz de canal, que pode ser tanto a real quanto a estimada.
+
+A quantização é uma operação não linear aplicada pela função \texttt{Quantizar} assim como está definido em~\cite e é aplicada na saída da operação de transmissão MIMO. Assim, 
+
+\subsection{BER do MIMO Convencional}
+
+Para fazer uma prova de conceito das funções acima e investigar algumas características da divesidade espacial, fez-se dois experimentos para avaliar o BER de uma transmissão MIMO convencional em função do SNR e da proporção de antenas receptoras. 
+
+O primeiro experimento consiste 
+
+\section{Estimação de canal}
+\label{sec:estimacao_canal}
+
+A estimação de canal é feita com a transmissão de símbolos piloto, representados pela matriz $\Phi\in\Cset^{\tau\times K}$, e a equação de transmissão é a mesma vista na eq.~\eqref{eq:transmissao_mimo}. 
+
+Para esse trabalho, são observados os desempenhos de três estimadores: Estimador de mínimos quadrados, Estimador AQN e o estimador proposto por~\cite{li.etal_2017a}. 
+
+O estimador de mínimos quadrados simplesmente resolve o sistema de equações definido por~\cite[eq. 4]{li.etal_2017a}. Ele é definido pela função \texttt{EstimarCanalMS} e está definido no algoritmo~\ref{alg:estimador_ms}. Já que esse estimador serve apenas para o caso de MIMO convencional, a função \texttt{EstimarCanalMS} possui um parâmetro booleano chamado $Quantizar$ que define se o resultado da transmissão é quantizado antes de ser utilizado na equação de mínimos quadrados. 
+
+O estimador AQN é uma consequência do estimador proposto para o caso específico de $\tau=K$, como é descrito na equação~\cite[eq]{li.ets} 
+, e a equação de transmissão é a mesma vista na eq.~\eqref{eq:transmissao_mimo}. 
+
+Para esse trabalho, são observados os desempenhos de três estimadores: Estimador de mínimos quadrados, Estimador AQN e o estimador proposto por~\cite{li.etal_2017a}. 
+
+O estimador de mínimos quadrados simplesmente resolve o sistema de equações definido por~\cite[eq. 4]{li.etal_2017a}. Ele é definido pela função \texttt{EstimarCanalMS} e está definido no algoritmo~\ref{alg:estimador_ms}. Já que esse estimador serve apenas para o caso de MIMO convencional, a função \texttt{EstimarCanalMS} possui um parâmetro booleano chamado $Quantizar$ que define se o resultado da transmissão é quantizado antes de ser utilizado na equação de mínimos quadrados. 
+
+O estimador AQN é uma consequência do estimador proposto para o caso específico de $\tau=K$, como é descrito na equação~\cite[eq]{li.ets} 
+, e a equação de transmissão é a mesma vista na eq.~\eqref{eq:transmissao_mimo}. 
+
+Para esse trabalho, são observados os desempenhos de três estimadores: Estimador de mínimos quadrados, Estimador AQN e o estimador proposto por~\cite{li.etal_2017a}. 
+
+O estimador de mínimos quadrados simplesmente resolve o sistema de equações definido por~\cite[eq. 4]{li.etal_2017a}. Ele é definido pela função \texttt{EstimarCanalMS} e está definido no algoritmo~\ref{alg:estimador_ms}. Já que esse estimador serve apenas para o caso de MIMO convencional, a função \texttt{EstimarCanalMS} possui um parâmetro booleano chamado $Quantizar$ que define se o resultado da transmissão é quantizado antes de ser utilizado na equação de mínimos quadrados. 
+
+O estimador AQN é uma consequência do estimador proposto para o caso específico de $\tau=K$, como é descrito na equação~\cite[eq]{li.ets} 
+, e a equação de transmissão é a mesma vista na eq.~\eqref{eq:transmissao_mimo}. 
+
+Para esse trabalho, são observados os desempenhos de três estimadores: Estimador de mínimos quadrados, Estimador AQN e o estimador proposto por~\cite{li.etal_2017a}. 
+
+O estimador de mínimos quadrados simplesmente resolve o sistema de equações definido por~\cite[eq. 4]{li.etal_2017a}. Ele é definido pela função \texttt{EstimarCanalMS} e está definido no algoritmo~\ref{alg:estimador_ms}. Já que esse estimador serve apenas para o caso de MIMO convencional, a função \texttt{EstimarCanalMS} possui um parâmetro booleano chamado $Quantizar$ que define se o resultado da transmissão é quantizado antes de ser utilizado na equação de mínimos quadrados. 
+
+O estimador AQN é uma consequência do estimador proposto para o caso específico de $\tau=K$, como é descrito na equação~\cite[eq]{li.ets} 
+
+\section{Capacidade do canal}
+\label{sec:capacidade_canal}
+
+
+
+\end{document}
