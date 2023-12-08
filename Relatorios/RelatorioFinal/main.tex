@@ -30,13 +30,16 @@
 
 \section{Introdução}
 
-Esse relatório consiste na descrição das simulações e resultados obtidos do trabalho de~\cite{li.etal_2017a}. O trabalho consiste em avaliar o desempenho de estimadores de canal para o caso de sistemas \textit{massive} MIMO que fazem uso de quantizadores de 1 bit de resolução. A estimação de canal é feita com o uso da decomposição de Bussgang para obter um modelo linear estatísticamente equivalente do processo não linear de quantização. 
+Esse relatório tem como objetivo reproduzir alguns dos resultados do artigo de~\cite{li.etal_2017a}. O trabalho de~\cite{li.etal_2017a} consiste em avaliar o desempenho de estimadores de canal para o caso de sistemas \textit{massive} MIMO que fazem uso de quantizadores de 1 bit de resolução. A estimação de canal é feita com o uso da decomposição de Bussgang para obter um modelo linear estatísticamente equivalente do processo não linear de quantização. 
 
-Esse relatório está dividio da seguinte forma:
+Esse relatório descreve o processo de reprodução de alguns resultados do artigo. Para isso, desenvolveu-se um ambiente de simulação que contém todas as operações de transmissão de um sistema MIMO. Esse sistema serviu para fazer simulações de taxas de erros de bit, simulações de cálculo de capacidade e estimação de canal. Com isso, além de validar alguns resultados do artigo também foi possível explorar na prática alguns resultados teóricos já esperados para a comunicação MIMO.
+
+As seções desse relatório são separadas por experimentos, com fundamentos, metodologia e resultados autocontidos. Com isso, a divisão deste relatório é feita da seguinte forma:
 Na seção~\ref{sec:ambiente_trabalho}, será apresentado o ambiente de simulação utilizado e as principais ferramentas, assim como formas de executar o código da simulação.
-Na seção~\ref{sec:fundamentos_mimo}, será demonstrado o processo de simulação de um sistema MIMO convencional e serão demonstrados algumas das características desse sistema com o uso da ferramenta para validar o ambiente.
-Na seção~\ref{sec:estimacao_canal}, será demonstrado quais as técnicas de estimação de canal utilizadas e qual o experimento feito para comparar as diferentes técnicas.
-Na seção~\ref{sec:capacidade_canal}, será apresentado os modelos de otimização que serão inseridos em um solver e os resultados equivalentes.
+Na seção~\ref{sec:fundamentos_mimo}, são descritos os algoritmos e operações fundamentais para o processo de transmissão MIMO, com funções que serão utilizadas no resto do relatório. 
+Na seção~\ref{sec:estimacao_canal}, serão descritos os algoritmos de estimação de canal utilizados e o experimento de comparação de erro de estimação entre eles.
+Na seção~\ref{sec:capacidade_canal}, será descrito quais as operações de capacidade de canal utilizadas e os experimentos relacionados a eficiência espectral alcançada.
+Na seção~\ref{sec:conclusao}, serão feitas as considerações finais sobre o trabalho.
 
 Ao longo do trabalho, $\Cset$ é o conjunto dos números complexos e $\Rset$ o dos números reais. Vetores estão em negrito e são declarados como em $\xbf\in\Cset^{N}$. Matrizes, com $M$ linhas e $N$ colunas, estão em letras maiúsculas e são representadas como em $A\in\Rset^{M\times N}$. A função $\Vect{A}$ é a função de vetorização da matriz $A$. O operador $\otimes$ é o produto de Kroneker. A função $\Diag{\abf}$ é a função de diagonalização de um vetor $\abf$.  Quando um vetor ou uma matriz é aleatória, a notação $\sim$ indica a sua distribuição respectiva. $\Ncal(\mu,\sigma)$ é a distribuição normal no conjunto dos reais com média $\mu$ e desvio padrão $\sigma$, e a distribuição $\Ccal\Ncal(\mu,\sigma)$ é a distribuição normal complexa. 
 
@@ -48,14 +51,14 @@ A simulação foi feita com o uso da linguagem de programação \texttt{Python 3
 
 O ambiente de trabalho utilizado foi o \texttt{Jupyter}, esse ambiente permite a programação de ``\textit{notebooks}'' formados por uma estrutura de texto HTML e código que pode ser executado e interagido diretamente. A google oferece uma plataforma chamada Collab para a execução desses \textit{notebooks} em núvem. O código respectivo desse relatório está em um notebook do Collab que pode ser acessado através do link do repositório desse trabalho.
 
-Os códigos, relatórios e outros materiais relacionados estão na minha página do github\footnote{https://github.com/Fdms-3741/TrabalhoTransmissaoDigital}.
+Os códigos, relatórios e outros materiais relacionados estão na página do github\footnote{https://github.com/Fdms-3741/TrabalhoTransmissaoDigital}.
 
-\section{Fundamentos de MIMO}
+\section{Fundamentos MIMO}
 \label{sec:fundamentos_mimo}
 
-Nesta seção são apresentados as funções desenvolvidas para criação do ambiente de simulação de transmissão e estimação de canal de um sistema MIMO. 
+Nessa primeira seção, é feito 
 
-\subsection{Definição das operações}
+\subsection{Fundamentação teórica}
 
 Como visto no relatório anterior, temos que a transmissão MIMO de $\tau$ símbolos entre $K$ transmissores e $M$ receptores consiste na seguinte equação:
 \begin{equation}
@@ -65,11 +68,13 @@ Como visto no relatório anterior, temos que a transmissão MIMO de $\tau$ símb
 
 Em que $Y\in\Cset^{M\times\tau}$ são os símbolos recebidos pelos $M$ receptores, $S\in\Cset^{K\times\tau}$ são os símbolos transmitidos pelos $K$ transmissores, $W\in\Cset^{M\times\tau}\sim\Ccal\Ncal(0,1)$ é o ruído AWGN e $H\in\Cset^{M\times K}\sim\Ccal\Ncal(0,1)$ é a matriz de canal. 
 
+\subsection{Descrição dos experimentos}
+
+Para demonstrar o processo de transmissão, são feitas simulações de Monte Carlo do processo de transmissão para múltiplas
+
 A função \texttt{GerarBits(K,$\tau$)} que gera uma matriz $B$ de bits $2\tau\times K$ de distribuição uniforme. As funções \texttt{CodificarQPSK(MatrizBits)} e \texttt{DecodificarQPSK(MatrizSimbolos)} é responsável pela conversão entre matrizes de bits e matrizes de símbolos QPSK normalizados. A modulação consiste no mapeamento de dois bits ($\{11,10,01,00\}$) para um símbolo QPSK ($\{1+j,1-j,-1+j,-1-j\}1/\sqrt{2}$). Já a demodulação consiste na aplicação de um critério de decisão para o mapeamento de um número complexo $s$ qualquer para um número $s_{QPSK}$ contido na constelação antes de aplicar a operação inversa da modulação. Esse critério de decisão é definido como $s_{QPSK}=sign(Re(s))+sign(Im(s))$, onde $sign()$ é a função sinal.
 
-Para realizar a transmissão MIMO, foi desenvolvida a função \texttt{TransmitirMIMO}, representada pelo algoritmo~\ref{alg:transmissao_mimo}. Ela recebe o canal, a matriz de sinal e a relação sinal ruído da transmissão. O ruído é gerado pela função descrita na linha~\ref{line:ruido} que gera uma matriz de dimensões $A\times B$ em que cada elemento é uma amostra de uma distribuição normal com média $\mu$ e desvio padrão $\sigma$. 
-
-Nesse algoritmo, é possível ver que o ruído é normalizado ($\sigma=1$) para que a relação sinal ruído seja dada pelo ganho de transmissão $\rho$, que é calculado em função do SNR. O valor de $\rho$ também é dividido entre as antenas transmissoras, assim a potência de transmissão é dividida entre todas as antenas e a relação SNR se torna global. 
+Para realizar a transmissão MIMO, foi desenvolvida a função \texttt{TransmitirMIMO}, representada pelo algoritmo~\ref{alg:transmissao_mimo}. Ela recebe o canal, a matriz de sinal e a relação sinal ruído da transmissão. O ruído é gerado pela função descrita na linha~\ref{line:ruido} que gera uma matriz de dimensões $A\times B$ em que cada elemento é uma amostra de uma distribuição normal com média $\mu$ e desvio padrão $\sigma$. Nessa função, é possível ver que o ruído é normalizado ($\sigma=1$) para que a relação sinal ruído seja dada pelo ganho de transmissão $\rho$, que é calculado em função do SNR. O valor de $\rho$ também é dividido entre as antenas transmissoras, assim a potência de transmissão é dividida entre todas as antenas e a relação SNR se torna global. 
 
 \begin{algorithm}
     \label{alg:transmissao_mimo}
@@ -92,16 +97,20 @@ Os dois receptores utilizados no trabalho são o \textit{Zero Forcing} (ZF), def
 
 A quantização é uma operação não linear aplicada pela função \texttt{Quantizar} assim como está definido em~\cite[eq. 2]{li.etal_2017a} e é aplicada na saída da operação de transmissão MIMO. Essencialmente, essa função apenas aplica o critério de decisão da função \texttt{DecodificarQPSK} mas sem converter os símbolos para bits. 
 
-\subsection{BER do MIMO Convencional}
+\subsection{Taxa de erro de bits do MIMO Convencional}
 
-Para fazer uma prova de conceito das funções acima e investigar algumas características da divesidade espacial, fez-se dois experimentos para avaliar o BER de uma transmissão MIMO convencional em função do SNR e da proporção de antenas receptoras. 
+Para fazer uma prova de conceito das funções acima e investigar algumas características da divesidade espacial, desenvolveu-se um experimento de transmissão MIMO para calcular a taxa de erro de bits (BER) sob diversas circunstâncias. O BER é observado em função da variação do SNR e do número de antenas receptoras. 
 
-O primeiro experimento é descrito pelo algoritmo~\ref{alg:ber_snr}. O experimento consiste em fazer uma simulação de Monte Carlo de todo o processo de transmissão MIMO. Cada experimetno consiste em gerar um novo canal $H$ e as matrizes de recepção para o ZF ($W^T_{ZF}$) e o MRC ($W^T_{MRC}$). Após isso, para cada valor de SNR, é gerado uma matriz de bits $B$ que é codificada, transmitida, recebida (para cada receptor) e decodificada. Esse processo resulta na matriz de bits estimada $\hat{B}$, que pode ser comparada com a matriz $B$ para o cálculo do BER dessa transmissão. As variáveis são definidas 
+O experimento de transmissão MIMO é descrito pelo algoritmo~\ref{alg:ber_snr}. O experimento consiste em uma simulação de Monte Carlo do processo de transmissão. Cada iteração do experimento consiste em gerar um novo canal $H$ e as matrizes de recepção para o ZF ($W^T_{ZF}$) e o MRC ($W^T_{MRC}$). Após isso, para cada valor de SNR e cada valor de quantidade de antenas receptoras, é gerado uma matriz de bits $B$ que é codificada, transmitida, recebida (para cada receptor) e decodificada. Esse processo resulta na matriz de bits estimada $\hat{B}$, que pode ser comparada com a matriz $B$ para o cálculo do BER dessa transmissão. 
+
+Ao total, foram feitos dois conjuntos de experimentos: Um com M fixo e SNR variável e outro com M variável e SNR fixo. Para ambos, foram feitas $10000$ repetições em que $K=4$ e $\tau=10^7$. Para o $M=16$ fixo, o SNR varia entre -20 e 20 com passo 5 e para o $SNR = 0$ dB os valores de M eram $M={4,8,16,32,64}$. 
+
+Os resultados podem ser vistos nas figuras~\ref{fig:resultado_ber_snr} e~\ref{fig:resultado_ber_m}. 
 
 \begin{algorithm}
     \label{alg:ber_snr}
     \caption{Estimativa do BER via MonteCarlo}
-    \KwData{$m,k,\tau,\text{repetições},\text{ListaM},\text{ListaSNR}$}
+    \KwData{$k,\tau,\text{repetições},\text{ListaM},\text{ListaSNR}$}
     \KwResult{$resultados$}
     $resultados = []$\Comment*[l]{Lista vazia para receber resultados}
     \Comment{Início das simulações}
