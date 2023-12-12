@@ -108,7 +108,7 @@ Para realizar a transmissão MIMO, foi desenvolvida a função \texttt{Transmiti
 
 Ao total, foram feitos dois conjuntos de experimentos: Um com M fixo e SNR variável e outro com M variável e SNR fixo. Para ambos, foram feitas $10000$ repetições em que $K=4$ e $\tau=10^7$. Para o $M=16$ fixo, o SNR varia entre -20 e 20 com passo 5 e para o $SNR = 0$ dB os valores de M eram $M=\{4,8,16,32,64\}$. Os resultados podem ser vistos nas figuras~\ref{fig:resultado_ber_snr} e~\ref{fig:resultado_ber_m}. 
 
-Para a figura~\ref{fig:resultado_ber_snr}, demonstrou-se a diferença de desempenho entre os receptores, que aumenta quanto maior for o SNR. A figura~\ref{fig:resultado_ber_m} também mostra essa difernça e destaca que, na condição de maior quantidade de antenas receptoras, a diferença de desempenho aumenta ainda mais entre os receptores.
+Para a figura~\ref{fig:resultado_ber_snr}, demonstrou-se a diferença de desempenho entre os receptores, que aumenta quanto maior for o SNR. O ZF em particular mostrou um desempenho muito melhor que o MRC para diferentes valores de SNR. A figura~\ref{fig:resultado_ber_m} também mostra essa difernça e destaca que, na condição de maior quantidade de antenas receptoras, o valor de BER decai muito rápido. Isso é particularmente observado dado que, para valores mais altos de SNR, não foi possível detectar um erro de bit sequer, devido a resolução limitada do experimento, tanto do ZF como do MRC.
 
 \begin{algorithm}
     \label{alg:ber_snr}
@@ -175,6 +175,7 @@ Em que $\Cbf_{\rbf_p}$ é a matriz de correlação da entrada quantizada, e $\rb
 
 \begin{equation}
     \tilde{\Phi}=A_p\bar{\Phi}=A_p(\Phi\otimes\rho_pI_M)
+    \label{eq:calculo_phi}
 \end{equation}
 
 Onde $I_M$ é uma matriz identidade $M\times M$, $\rho_p$ é a potência de transmissão, $\otimes$ é o produto de Kronecker, e $A_p$ é a matriz de decomposição Bussgang, como descrita no relatório teórico.
@@ -190,31 +191,34 @@ Para calcular a matriz de correlação de $\rbf_p$, é necessário utilizar a re
                     &= \Phi \Cbf_\hbf \Phi^H + \Cbf_{\nbf}
 \end{align}
 
-Como tanto o modelo de canal quanto o ruído não assume correlação espacial entre os canais, temos que $\Cbf_{\hbf}=I_{M\tau}$. E como não há correlação entre o canal e o ruído, $\Cbf_{\hbf\nbf}=0$.
+Como tanto o modelo de canal quanto o ruído não assume correlação espacial entre os canais, temos que $\Cbf_{\hbf}=I_{M\tau}$ e $\Cbf_{\nbf}=\sigma/M \Ibf_{M\tau}=\Ibf_{M\tau}/M$. E como não há correlação entre o canal e o ruído, $\Cbf_{\hbf\nbf}=0$.
 
 \subsection{Descrição dos experimentos}
 
-O experimento para esitmação de canal é descrito pelo algoritmo~\ref{alg:estimacao_canal}. O experimento faz uma simulação de Monte Carlo de $Repetições$ repetições que gera um canal e utiliza todosos estimadores, para cada valor de SNR, para estimar o canal e medir o erro médio quadrático normalizado para cada estimação.  
+O experimento para esitmação de canal é descrito pelo algoritmo~\ref{alg:estimacao_canal}. O experimento faz uma simulação de Monte Carlo de $Repetições$ repetições que gera um canal e utiliza todosos estimadores, para cada valor de SNR, para estimar o canal e medir o erro médio quadrático normalizado para cada estimação. Para cada experimento, é feito uma transmissão dos símbolos pilotos $\Phi$ através do canal real $H$, a quantização dos símbolos recebidos (se for o caso), o cálculo do estimador e finalmente o cálculo do erro médio quadrático normalizado da estimação do canal.
 
-No experimento, é utilizado a função \texttt{CalcularEstimador} que que representa o conjunto de operações para calcular o estimador com base na transmissão  
+No experimento, temos as seguinte funções auxiliares: A função \texttt{CalcularEstimador} que que representa o conjunto de operações para calcular o estimador com base nos símbolos recebidos e na matriz de pilotos. A função \texttt{QuantizarTransmissao} permite que seja ligado ou desligado a etapa de quantização em função de cada estimador. Essa última função permite que seja comparado, para o estimador de mínimos quadrados, qual é a sua capacidade de estimação tanto para o caso quantizado quanto o convencional. 
 
 \begin{algorithm}
     \label{alg:estimacao_canal}
-    \KwData{$ListaSNR$, $ListaEstimadores$, $Repetições$, $m$, $k$, $\tau$}
+    \caption{Experimento para avaliação da estimação de canal}
+    \KwData{$ListaSNR$, $ListaEstimadores$, \textit{Repetições}, $m$, $k$, $\tau$}
     \KwResult{$Resultados$}
     $\Phi\gets$ \texttt{np.fft.fft}($\tau$,$k$)\Comment*[r]{Calcula a matriz de pilotos}
-    \For{$i=0;\; i < Repetições;\; i=i+1$}{
+    \For{$i=0;\; i <$ Repetições$;\; i=i+1$}{
         $H\gets$\texttt{GerarCanal($m$,$k$)}\;
         \For{$SNR$ em $ListaSNR$}{
             \For{$estimador$ em $ListaEstimadores$}{
-                $Y_p\gets$ \texttt{TransmitirMIMO}($R_p$,$\Phi$)\;
+                \Comment{Transmissão da matriz Piloto}
+                $Y_p\gets$ \texttt{TransmitirMIMO}($H$,$\Phi$)\;
                 $Quantizar \gets$ \texttt{QuantizarTransmissao}($estimador$)\;
                 \If{$Quantizar$}{
                     $R_p \gets$ \texttt{Quantizar}($Y_p$)\;
                 }\Else{
                     $R_p \gets Y_p$\;
                 }
-                $\hat{H}\gets$ \texttt{CalcularEstimador($H$,$\Phi$,$estimador$)}\;
+                \Comment{Calculo do erro de estimação}
+                $\hat{H}\gets$ \texttt{CalcularEstimador($R_p$,$\Phi$,$estimador$)}\;
                 $NMSE\gets (\texttt{SomarElementos(}||H-\hat{H}||_2^2\texttt{)})/mk$\;
                 $NMSE_{dB}\gets 10*log(NMSE)$\;
                 $resultados$\texttt{.concatenar(}$[i,SNR,estimador,NMSE_{dB}]]$\texttt{)}\;
@@ -223,15 +227,35 @@ No experimento, é utilizado a função \texttt{CalcularEstimador} que que repre
     }
 \end{algorithm}
 
-\section{Capacidade do canal}
+\subsection{Resultados}
+
+Para esses experimentos, são feitos dois gráficos distintos: A comparação entre o erro de estimação dos modelos quantizados e a comparação entre erros de estimação para o estimador de mínimos quadrados para o caso quantizado e convencional. Em ambos os gráficos, são feitas 10000 repetições, o SNR varia entre -20 e 20, são $K=4$ antenas transmissoras e $M=16$ antenas receptoras e o tamanho da sequência piloto é de $\tau=20$ (exceto no estimador AQN, que define $\tau=K$). Os resultados podem ser vistos na figura~\ref{fig:resultado_estimacao_canal}. 
+
+A primeira comparação de interesse pode ser vista na figura~\ref{subfig:resultado_estimacao_canal_propostos}, que mostra qual o desempenho entre o modelo proposto e um outro modelo da literatura. Ao contrário do que foi visto no artigo, há uma diferença constante entre o erro médio quadrático dos dois estimadores, porém o estimador proposto ainda possui um desempenho melhor do que o AQN. O comportamento de melhor estimar para valores de SNR mais altos também é observado, dado o aumento da diferença para valores diferentes do gráfico. 
+
+Para explorar uma outra característica desse sistema, a figura~\ref{subfig:resultado_estimacao_canal_ms} mostra a diferença da estimação ao se calcular a solução de mínimos quadrados da equação~\eqref{eq:min_squa} para o caso de uma recepção quantizada ou convencional. Ambas as curvas mostram uma tendência muito parecida em regiões de baixo SNR, com uma leve vantagem da versão quantizada entre -8 e 0 dB. Porém, assim que o SNR passa de 0 dB, o erro do estimador para o caso quantizado atinge um limite inferior e começa a subir, o que mostra o baixo desempenho de estimação em melhores condições de transmissão. 
+
+Uma possível explicação para a diferença dos gráficos está na amplitude da estimação do canal em função da relação sinal-ruído. O canal original tem a distribuição normal-complexa $\Ccal\Ncal(0,1)$  e o resultado da estimação é uma função que varia proporcionalmente ao valor de $\rho_p$ (vide equações~\cite[eq. 11]{li.etal_2017a} ,~\eqref{eq:estimador_proposto} e~\eqref{eq:calculo_phi}). Assim, pode existir um viés com relação a potência. Vale como trabalhos futuros investigar essa relação e determinar se há uma diferença com o resultado proposto.
+
+\section{Eficiência espectral do sistema proposto}
 \label{sec:capacidade_canal}
+
+Essa seção tem por objetivo investigar os resultados de eficiência espectral indicados no artigo. Esses resultados consistem em simplificações do modelo de capacidade do canal para cada receptor com o objetivo de demonstrar algumas propriedades de forma analítica. 
+
+\subsection{Fundamentação teórica}
+
+Nessa etapa, serão comparados duas formas diferentes de estimação de capacidade: As equações analíticas~\cite[eq. 48]{li.etal_2017a} e~\cite[eq. 49]{li.etal_2017a} com a equação de simulação de capacidade em~\cite[eq. 42]{li.etal_2017a}. 
+
+Para desfazer as contas, desfez-se a análise por usuário que a equação~\cite[eq. 42]{li.etal_2017a} faz.
 
 
 
 \section{Considerações finais}
 \label{sec:consideracoes_finais}
 
+Esse trabalho foi uma boa oportunidade para aprender sobre sistemas de comunicação de múltiplas antenas e explorar tópicos mais avançados no assunto. Deste relatório foi possível observar a importância de sistemas MIMO e quais os impactos de soluções para a recepção, como é o caso de baixa resolução da conversão analógica digital. 
 
+Sobre o trabalho, pode-se observar o ganho de eficácia do modelo proposto em comparação com outras propostas e métodos convencionais. Pode-se avaliar também relações importantes sobre o custo energético de transmissão.
 
 \printbibliography
 
