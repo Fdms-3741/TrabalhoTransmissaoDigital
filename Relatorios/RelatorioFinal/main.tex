@@ -86,7 +86,7 @@ Já um resultado fundamental da diversidade de recepção, demonstrado em~\cite[
 
 \subsection{Descrição dos experimentos}
 
-Para demonstrar o processo de transmissão e observar os fenômenos citados na subseção anterior, são feitas simulações de Monte Carlo do processo de transmissão para múltiplos valores de SNR e de número de antenas. A simulação é descrita passo-a-passo no algoritmo~\ref{alg:ber_snr}. 
+Para demonstrar o processo de transmissão e observar os fenômenos citados na subseção anterior, são feitas simulações de Monte Carlo do processo de transmissão para múltiplos valores de SNR e de número de antenas. O experimento de transmissão MIMO é descrito pelo algoritmo~\ref{alg:ber_snr}. O experimento consiste em uma simulação de Monte Carlo do processo de transmissão. Cada iteração do experimento consiste em gerar um novo canal $H$ e as matrizes de recepção para o ZF ($W^T_{ZF}$) e o MRC ($W^T_{MRC}$). Após isso, para cada valor de SNR e cada valor de quantidade de antenas receptoras, é gerado uma matriz de bits $B$ que é codificada, transmitida, recebida (para cada receptor) e decodificada. Esse processo resulta na matriz de bits estimada $\hat{B}$, que pode ser comparada com a matriz $B$ para o cálculo do BER dessa transmissão. 
 
 As funções \texttt{CodificarQPSK(MatrizBits)} e \texttt{DecodificarQPSK(MatrizSimbolos)} é responsável pela conversão entre matrizes de bits e matrizes de símbolos QPSK normalizados. A modulação consiste no mapeamento de dois bits ($\{11,10,01,00\}$) para um símbolo QPSK ($\{1+j,1-j,-1+j,-1-j\}1/\sqrt{2}$). Já a demodulação consiste na aplicação de um critério de decisão para o mapeamento de um número complexo $s$ qualquer para um número $s_{QPSK}$ contido na constelação antes de aplicar a operação inversa da modulação. Esse critério de decisão é definido como $s_{QPSK}=sign(Re(s))+sign(Im(s))$, onde $sign()$ é a função sinal. A função \texttt{Quantizar($S$)}, usada nas próximas seções, apenas aplica o mesmo critério de decisão da função \texttt{DecodificarQPSK()}, sem a conversão de símbolos para bits. 
 
@@ -103,11 +103,8 @@ Para realizar a transmissão MIMO, foi desenvolvida a função \texttt{Transmiti
     $\ybf \gets \sqrt{\rho}H\sbf+\wbf$\;
 \end{algorithm}
 
-\subsection{Taxa de erro de bits do MIMO Convencional}
+\subsection{Resultados}
 
-Para fazer uma prova de conceito das funções acima e investigar algumas características da divesidade espacial, desenvolveu-se um experimento de transmissão MIMO para calcular a taxa de erro de bits (BER) sob diversas circunstâncias. O BER é observado em função da variação do SNR e do número de antenas receptoras. 
-
-O experimento de transmissão MIMO é descrito pelo algoritmo~\ref{alg:ber_snr}. O experimento consiste em uma simulação de Monte Carlo do processo de transmissão. Cada iteração do experimento consiste em gerar um novo canal $H$ e as matrizes de recepção para o ZF ($W^T_{ZF}$) e o MRC ($W^T_{MRC}$). Após isso, para cada valor de SNR e cada valor de quantidade de antenas receptoras, é gerado uma matriz de bits $B$ que é codificada, transmitida, recebida (para cada receptor) e decodificada. Esse processo resulta na matriz de bits estimada $\hat{B}$, que pode ser comparada com a matriz $B$ para o cálculo do BER dessa transmissão. 
 
 Ao total, foram feitos dois conjuntos de experimentos: Um com M fixo e SNR variável e outro com M variável e SNR fixo. Para ambos, foram feitas $10000$ repetições em que $K=4$ e $\tau=10^7$. Para o $M=16$ fixo, o SNR varia entre -20 e 20 com passo 5 e para o $SNR = 0$ dB os valores de M eram $M=\{4,8,16,32,64\}$. Os resultados podem ser vistos nas figuras~\ref{fig:resultado_ber_snr} e~\ref{fig:resultado_ber_m}. 
 
@@ -159,20 +156,82 @@ A estimação de canal é feita com a transmissão de símbolos piloto, represen
     \rbf_p = \Phi\hbf + \nbf
 \end{equation}
 
-Em que $\rbf_p=\Vect{\R}$ é o vetor de símbolos recebidos, $\hbf=\Vect{H}$ é o vetor de canal e $\nbf$ é o ruído de transmissão. 
+Em que $\rbf_p=\Vect{R}$ é o vetor de símbolos recebidos, $\hbf=\Vect{H}$ é o vetor de canal e $\nbf$ é o ruído de transmissão. Para os símbolos, qualquer configuração ortogonal é válida. O artigo escolhe gerar a matriz a partir de uma matriz FFT.  
 
 Para esse trabalho, são observados os desempenhos de três estimadores: Estimador de mínimos quadrados, Estimador AQN e o estimador proposto por~\cite{li.etal_2017a}. 
 
-O estimador de mínimos quadrados é simplesmente o resultado de mínimos quadrados do sistema~\eqref{eq:min_squa}. Como essa estimação não considera a quantização dos símbolos recebidos, resultados de estimação desse estimador são calculados tanto para o caso dos símbolos recebidos terem sido quantizados ou não. O estimador AQN é uma consequência do estimador proposto para o caso específico da dimensão da matriz $\Phi$ ser quadrada, ou seja $\tau=K$, e sua equação é vista em~\cite[eq. 16]{li.etal_2017a}. 
+O estimador de mínimos quadrados é simplesmente o resultado de mínimos quadrados do sistema~\eqref{eq:min_squa}. Como essa estimação não considera a quantização dos símbolos recebidos, resultados de estimação desse estimador são calculados tanto para o caso dos símbolos recebidos terem sido quantizados ou não. O estimador AQN é uma consequência do estimador proposto para o caso específico da dimensão da matriz $\Phi$ ser quadrada, ou seja $\tau=K$, e sua equação é vista em~\cite[eq. 16]{li.etal_2017a}.
 
+\subsubsection{Estimador de Bussgang}
 
+Para o estimador proposto, é calculada a seguinte equação:
+
+\begin{equation}
+    \hat{h} = \tilde{\Phi}^H\Cbf_{\rbf_p}^{-1}\rbf_p       
+    \label{eq:estimador_proposto}
+\end{equation}
+
+Em que $\Cbf_{\rbf_p}$ é a matriz de correlação da entrada quantizada, e $\rbf_p$ são os símbolos recebidos no processo de transmissão dos pilotos.
+
+\begin{equation}
+    \tilde{\Phi}=A_p\bar{\Phi}=A_p(\Phi\otimes\rho_pI_M)
+\end{equation}
+
+Onde $I_M$ é uma matriz identidade $M\times M$, $\rho_p$ é a potência de transmissão, $\otimes$ é o produto de Kronecker, e $A_p$ é a matriz de decomposição Bussgang, como descrita no relatório teórico.
+
+Para calcular a matriz de correlação de $\rbf_p$, é necessário utilizar a relação da equação~\cite[eq. (13)]{li.etal_2017a} derivada da decomposição de bussgang para quantizadores de 1 bit. Essa equação depende da correlação do sinal antes da quantização $\ybf_p=\Vect{Y_p}$, assim, essa correlação é calculada diretamente como descrito abaixo:
+
+\begin{align}
+    \label{eq:calculo_correlacao_yp}
+    \Cbf_{\ybf_p}   &= E[y_py_p^H] \\ \nonumber
+                    &= E[(\Phi \hbf + \nbf)(\Phi \hbf + \nbf)^H] \\ \nonumber 
+                    &= \Phi E[\hbf \hbf^H] \Phi^H + 2\Phi E[\hbf\nbf^H] + E[\nbf\nbf^H] \\ \nonumber 
+                    &= \Phi \Cbf_\hbf \Phi^H + 2\Phi\Cbf_{\hbf\nbf} + \Cbf_{\nbf} \\ \nonumber 
+                    &= \Phi \Cbf_\hbf \Phi^H + \Cbf_{\nbf}
+\end{align}
+
+Como tanto o modelo de canal quanto o ruído não assume correlação espacial entre os canais, temos que $\Cbf_{\hbf}=I_{M\tau}$. E como não há correlação entre o canal e o ruído, $\Cbf_{\hbf\nbf}=0$.
+
+\subsection{Descrição dos experimentos}
+
+O experimento para esitmação de canal é descrito pelo algoritmo~\ref{alg:estimacao_canal}. O experimento faz uma simulação de Monte Carlo de $Repetições$ repetições que gera um canal e utiliza todosos estimadores, para cada valor de SNR, para estimar o canal e medir o erro médio quadrático normalizado para cada estimação.  
+
+No experimento, é utilizado a função \texttt{CalcularEstimador} que que representa a operação de realizar uma transmissão de $\tau$ pilotos através do canal real $H$ com um valor específico
+
+\begin{algorithm}
+    \label{alg:estimacao_canal}
+    \KwData{$ListaSNR$, $ListaEstimadores$, $Repetições$, $m$, $k$, $\tau$}
+    \KwResult{$Resultados$}
+    $\Phi\gets$ \texttt{np.fft.fft}($\tau$,$k$)\Comment*[r]{Calcula a matriz de pilotos}
+    \For{$i=0;\; i < Repetições;\; i=i+1$}{
+        $H\gets$\texttt{GerarCanal($m$,$k$)}\;
+        \For{$SNR$ em $ListaSNR$}{
+            \For{$estimador$ em $ListaEstimadores$}{
+                $Y_p\gets$ \texttt{TransmitirMIMO}($H$,$\Phi$)\;
+                $Quantizar \gets$ \texttt{QuantizarTransmissao}($estimador$)\;
+                \IfElse{$Quantizar$}{
+                    $R_p \gets$ \texttt{Quantizar}($Y_p$)\;
+                }{
+                    $R_p \gets Y_p$\;
+                }
+                $\hat{H}\gets$ \texttt{CalcularEstimador($H$,$\Phi$,$estimador$)}\;
+                $NMSE\gets (\texttt{SomarElementos(}||H-\hat{H}||_2^2\texttt{)})/mk$\;
+                $NMSE_{dB}\gets 10*log(NMSE)$\;
+                $resultados$\texttt{.concatenar(}$[i,SNR,estimador,NMSE_{dB}]]$\texttt{)}\;
+            }
+        }
+    }
+\end{algorithm}
 
 \section{Capacidade do canal}
 \label{sec:capacidade_canal}
 
 
+
 \section{Considerações finais}
 \label{sec:consideracoes_finais}
+
+
 
 \printbibliography
 
