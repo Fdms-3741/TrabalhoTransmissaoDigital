@@ -16,6 +16,9 @@
 \SetKwInput{KwData}{Recebe}
 \SetKwInput{KwResult}{Retorna}
 
+\usepackage[style=numeric,sorting=none]{biblatex}
+\addbibresource{TransmissaoDigital.bib}
+\usepackage{csquotes}
 
 % Usa as macros para vetores e matrizes
 \usepackage{MathMacros}
@@ -47,7 +50,7 @@ Ao longo do trabalho, $\Cset$ é o conjunto dos números complexos e $\Rset$ o d
 \section{Ambiente de trabalho}
 \label{sec:ambiente_trabalho}
 
-A simulação foi feita com o uso da linguagem de programação \texttt{Python 3}. As principais bibliotecas utilizadas são as bibliotecas \texttt{NumPy}, \texttt{CuPy} e \texttt{SciPy} para cálculos numéricos e funções executadas em GPU, a biblioteca \texttt{Pandas} para manipulação de tabelas de resultados, a biblioteca \texttt{cvxpy} para otimização convexa e as bibliotecas \texttt{Matplotlib} e \texttt{Seaborn} para visualização dos resultados. Todas as funções das bibliotecas, quando citadas, serão atribuídas com o nome da biblioteca seguido de um ponto antes do nome da função (por exemplo: \texttt{biblioteca.função}). Quando não houver citação da biblioteca utilizada em uma função, a função foi desenvolvida por mim.
+A simulação foi feita com o uso da linguagem de programação \texttt{Python 3}. As principais bibliotecas utilizadas são as bibliotecas \texttt{NumPy}, \texttt{CuPy} e \texttt{SciPy} para cálculos numéricos e funções executadas em GPU, a biblioteca \texttt{Pandas} para manipulação de tabelas de resultados, a biblioteca \texttt{cvxpy} para otimização convexa e as bibliotecas \texttt{Matplotlib} e \texttt{Seaborn} para visualização dos resultados. Funções e métodos de bibliotecas estarão acompanhados pelo nome da respectiva biblioteca. Quando este não for o caso, a função citada está no código desse relatório. 
 
 O ambiente de trabalho utilizado foi o \texttt{Jupyter}, esse ambiente permite a programação de ``\textit{notebooks}'' formados por uma estrutura de texto HTML e código que pode ser executado e interagido diretamente. A google oferece uma plataforma chamada Collab para a execução desses \textit{notebooks} em núvem. O código respectivo desse relatório está em um notebook do Collab que pode ser acessado através do link do repositório desse trabalho.
 
@@ -56,7 +59,7 @@ Os códigos, relatórios e outros materiais relacionados estão na página do gi
 \section{Fundamentos MIMO}
 \label{sec:fundamentos_mimo}
 
-Nessa primeira seção, é feito 
+Para dar início a investigação do trabalho de~\cite{li.etal_2017a}, deve-se primeiramente criar o ambiente para comunicações MIMO e validá-lo com simulações. Portanto, nessa seção será investigado os fundamentos de comunicação MIMO e será proposto simulações para validação e exploração de alguns conceitos teóricos.  
 
 \subsection{Fundamentação teórica}
 
@@ -66,13 +69,26 @@ Como visto no relatório anterior, temos que a transmissão MIMO de $\tau$ símb
     \label{eq:transmissao_mimo}
 \end{equation}
 
-Em que $Y\in\Cset^{M\times\tau}$ são os símbolos recebidos pelos $M$ receptores, $S\in\Cset^{K\times\tau}$ são os símbolos transmitidos pelos $K$ transmissores, $W\in\Cset^{M\times\tau}\sim\Ccal\Ncal(0,1)$ é o ruído AWGN e $H\in\Cset^{M\times K}\sim\Ccal\Ncal(0,1)$ é a matriz de canal. 
+Em que $Y\in\Cset^{M\times\tau}$ são os símbolos recebidos pelos $M$ receptores, $S\in\Cset^{K\times\tau}$ são os símbolos transmitidos pelos $K$ transmissores, $W\in\Cset^{M\times\tau}\sim\Ccal\Ncal(0,1)$ é o ruído AWGN e $H\in\Cset^{M\times K}\sim\Ccal\Ncal(0,1)$ é a matriz de canal. Devido a diversidade espacial desse tipo de comunicação, pode-se considerar que a matriz $H$ é do tipo Rayleigh e sem memória. 
+
+Para a recepção, são utilizados dois receptores da literatura: O \textit{Maximum Ratio Combining} (MRC) e o \textit{Zero Forcing} (ZF). Ambos os receptores estão descritos abaixo: 
+
+\begin{equation}
+\begin{cases}
+    W^T_{ZF} = H^H \\
+    W^T_{MRC} = (H^HH)^{-1}H^H
+\end{cases}
+\end{equation}
+
+Diversos trabalhos da literatura~\cite{} exploram o desempenho de ambos receptores, e é observado que o desempenho do XXX é melhor do que o do YYY. 
+
+Já um resultado fundamental da diversidade de recepção, demonstrado em~\cite[eq. 3.70 e 3.71]{tse.viswanath_2005}, é que com o aumento do número de antenas, a taxa de erro de transmissão diminui devido tando a um ganho de potência quanto um ganho de diversidade. 
 
 \subsection{Descrição dos experimentos}
 
-Para demonstrar o processo de transmissão, são feitas simulações de Monte Carlo do processo de transmissão para múltiplas
+Para demonstrar o processo de transmissão e observar os fenômenos citados na subseção anterior, são feitas simulações de Monte Carlo do processo de transmissão para múltiplos valores de SNR e de número de antenas. A simulação é descrita passo-a-passo no algoritmo~\ref{alg:ber_snr}. 
 
-A função \texttt{GerarBits(K,$\tau$)} que gera uma matriz $B$ de bits $2\tau\times K$ de distribuição uniforme. As funções \texttt{CodificarQPSK(MatrizBits)} e \texttt{DecodificarQPSK(MatrizSimbolos)} é responsável pela conversão entre matrizes de bits e matrizes de símbolos QPSK normalizados. A modulação consiste no mapeamento de dois bits ($\{11,10,01,00\}$) para um símbolo QPSK ($\{1+j,1-j,-1+j,-1-j\}1/\sqrt{2}$). Já a demodulação consiste na aplicação de um critério de decisão para o mapeamento de um número complexo $s$ qualquer para um número $s_{QPSK}$ contido na constelação antes de aplicar a operação inversa da modulação. Esse critério de decisão é definido como $s_{QPSK}=sign(Re(s))+sign(Im(s))$, onde $sign()$ é a função sinal.
+As funções \texttt{CodificarQPSK(MatrizBits)} e \texttt{DecodificarQPSK(MatrizSimbolos)} é responsável pela conversão entre matrizes de bits e matrizes de símbolos QPSK normalizados. A modulação consiste no mapeamento de dois bits ($\{11,10,01,00\}$) para um símbolo QPSK ($\{1+j,1-j,-1+j,-1-j\}1/\sqrt{2}$). Já a demodulação consiste na aplicação de um critério de decisão para o mapeamento de um número complexo $s$ qualquer para um número $s_{QPSK}$ contido na constelação antes de aplicar a operação inversa da modulação. Esse critério de decisão é definido como $s_{QPSK}=sign(Re(s))+sign(Im(s))$, onde $sign()$ é a função sinal. A função \texttt{Quantizar($S$)}, usada nas próximas seções, apenas aplica o mesmo critério de decisão da função \texttt{DecodificarQPSK()}, sem a conversão de símbolos para bits. 
 
 Para realizar a transmissão MIMO, foi desenvolvida a função \texttt{TransmitirMIMO}, representada pelo algoritmo~\ref{alg:transmissao_mimo}. Ela recebe o canal, a matriz de sinal e a relação sinal ruído da transmissão. O ruído é gerado pela função descrita na linha~\ref{line:ruido} que gera uma matriz de dimensões $A\times B$ em que cada elemento é uma amostra de uma distribuição normal com média $\mu$ e desvio padrão $\sigma$. Nessa função, é possível ver que o ruído é normalizado ($\sigma=1$) para que a relação sinal ruído seja dada pelo ganho de transmissão $\rho$, que é calculado em função do SNR. O valor de $\rho$ também é dividido entre as antenas transmissoras, assim a potência de transmissão é dividida entre todas as antenas e a relação SNR se torna global. 
 
@@ -87,25 +103,15 @@ Para realizar a transmissão MIMO, foi desenvolvida a função \texttt{Transmiti
     $\ybf \gets \sqrt{\rho}H\sbf+\wbf$\;
 \end{algorithm}
 
-Já a recepção consiste em calcular o receptor $W^H$ necessário para obter o símbolo estimado $\hat{S}$ com base no sinal recebido pelas antenas $Y$. Esse processo é definido pela seguinte equação:
-
-\begin{equation}
-    S = W^TY
-\end{equation}
-
-Os dois receptores utilizados no trabalho são o \textit{Zero Forcing} (ZF), definido pela equação $H^{H}$, e o \textit{Maximum Ratio Combining} (MRC), definido pela equação $(H^HH)^{-1}H^T$. Cada um deles é calculado pelas funções \texttt{CalcularReceptor<Nome>($H$)}, em que \texttt{<Nome>} define qual receptor é utilizado (``ZF'' ou ``MRC'') e $H$ é a matriz de canal. Para os processos de estimação, a matriz de canal estimada $\hat{H}$ é utilizada no lugar da matriz de canal real.
-
-A quantização é uma operação não linear aplicada pela função \texttt{Quantizar} assim como está definido em~\cite[eq. 2]{li.etal_2017a} e é aplicada na saída da operação de transmissão MIMO. Essencialmente, essa função apenas aplica o critério de decisão da função \texttt{DecodificarQPSK} mas sem converter os símbolos para bits. 
-
 \subsection{Taxa de erro de bits do MIMO Convencional}
 
 Para fazer uma prova de conceito das funções acima e investigar algumas características da divesidade espacial, desenvolveu-se um experimento de transmissão MIMO para calcular a taxa de erro de bits (BER) sob diversas circunstâncias. O BER é observado em função da variação do SNR e do número de antenas receptoras. 
 
 O experimento de transmissão MIMO é descrito pelo algoritmo~\ref{alg:ber_snr}. O experimento consiste em uma simulação de Monte Carlo do processo de transmissão. Cada iteração do experimento consiste em gerar um novo canal $H$ e as matrizes de recepção para o ZF ($W^T_{ZF}$) e o MRC ($W^T_{MRC}$). Após isso, para cada valor de SNR e cada valor de quantidade de antenas receptoras, é gerado uma matriz de bits $B$ que é codificada, transmitida, recebida (para cada receptor) e decodificada. Esse processo resulta na matriz de bits estimada $\hat{B}$, que pode ser comparada com a matriz $B$ para o cálculo do BER dessa transmissão. 
 
-Ao total, foram feitos dois conjuntos de experimentos: Um com M fixo e SNR variável e outro com M variável e SNR fixo. Para ambos, foram feitas $10000$ repetições em que $K=4$ e $\tau=10^7$. Para o $M=16$ fixo, o SNR varia entre -20 e 20 com passo 5 e para o $SNR = 0$ dB os valores de M eram $M={4,8,16,32,64}$. 
+Ao total, foram feitos dois conjuntos de experimentos: Um com M fixo e SNR variável e outro com M variável e SNR fixo. Para ambos, foram feitas $10000$ repetições em que $K=4$ e $\tau=10^7$. Para o $M=16$ fixo, o SNR varia entre -20 e 20 com passo 5 e para o $SNR = 0$ dB os valores de M eram $M=\{4,8,16,32,64\}$. Os resultados podem ser vistos nas figuras~\ref{fig:resultado_ber_snr} e~\ref{fig:resultado_ber_m}. 
 
-Os resultados podem ser vistos nas figuras~\ref{fig:resultado_ber_snr} e~\ref{fig:resultado_ber_m}. 
+Para a figura~\ref{fig:resultado_ber_snr}, demonstrou-se a diferença de desempenho entre os receptores, que aumenta quanto maior for o SNR. A figura~\ref{fig:resultado_ber_m} também mostra essa difernça e destaca que, na condição de maior quantidade de antenas receptoras, a diferença de desempenho aumenta ainda mais entre os receptores.
 
 \begin{algorithm}
     \label{alg:ber_snr}
@@ -138,44 +144,36 @@ Os resultados podem ser vistos nas figuras~\ref{fig:resultado_ber_snr} e~\ref{fi
     }
 \end{algorithm}
 
-Já o segundo experimento consiste em 
 
 \section{Estimação de canal}
 \label{sec:estimacao_canal}
 
-A estimação de canal é feita com a transmissão de símbolos piloto, representados pela matriz $\Phi\in\Cset^{\tau\times K}$, e a equação de transmissão é a mesma vista na eq.~\eqref{eq:transmissao_mimo}. 
+Já nessa seção, o objetivo será observar o desempenho de estimação de canal para diferentes estimadores, tanto o proposto pelo artigo como outras estimações, que variam entre outras propostas e a estimação convencional via mínimos quadrados. 
+
+\subsection{Fundamentação teórica}
+
+A estimação de canal é feita com a transmissão de símbolos piloto, representados pela matriz $\Phi\in\Cset^{\tau\times K}$, e a equação de transmissão é a mesma vista na eq.~\eqref{eq:transmissao_mimo}. Após a transmissão, os símbolos são quantizados com base na relação $R_p=\mathcal{Q}(Y_p)$, que quantiza cada elemento da matriz. Finalmente, o canal pode ser estimado com base no seguinte sistema:
+
+\begin{equation}
+    \label{eq:min_squa}
+    \rbf_p = \Phi\hbf + \nbf
+\end{equation}
+
+Em que $\rbf_p=\Vect{\R}$ é o vetor de símbolos recebidos, $\hbf=\Vect{H}$ é o vetor de canal e $\nbf$ é o ruído de transmissão. 
 
 Para esse trabalho, são observados os desempenhos de três estimadores: Estimador de mínimos quadrados, Estimador AQN e o estimador proposto por~\cite{li.etal_2017a}. 
 
-O estimador de mínimos quadrados simplesmente resolve o sistema de equações definido por~\cite[eq. 4]{li.etal_2017a}. Ele é definido pela função \texttt{EstimarCanalMS} e está definido no algoritmo~\ref{alg:estimador_ms}. Já que esse estimador serve apenas para o caso de MIMO convencional, a função \texttt{EstimarCanalMS} possui um parâmetro booleano chamado $Quantizar$ que define se o resultado da transmissão é quantizado antes de ser utilizado na equação de mínimos quadrados. 
+O estimador de mínimos quadrados é simplesmente o resultado de mínimos quadrados do sistema~\eqref{eq:min_squa}. Como essa estimação não considera a quantização dos símbolos recebidos, resultados de estimação desse estimador são calculados tanto para o caso dos símbolos recebidos terem sido quantizados ou não. O estimador AQN é uma consequência do estimador proposto para o caso específico da dimensão da matriz $\Phi$ ser quadrada, ou seja $\tau=K$, e sua equação é vista em~\cite[eq. 16]{li.etal_2017a}. 
 
-O estimador AQN é uma consequência do estimador proposto para o caso específico de $\tau=K$, como é descrito na equação~\cite[eq]{li.ets} 
-, e a equação de transmissão é a mesma vista na eq.~\eqref{eq:transmissao_mimo}. 
 
-Para esse trabalho, são observados os desempenhos de três estimadores: Estimador de mínimos quadrados, Estimador AQN e o estimador proposto por~\cite{li.etal_2017a}. 
-
-O estimador de mínimos quadrados simplesmente resolve o sistema de equações definido por~\cite[eq. 4]{li.etal_2017a}. Ele é definido pela função \texttt{EstimarCanalMS} e está definido no algoritmo~\ref{alg:estimador_ms}. Já que esse estimador serve apenas para o caso de MIMO convencional, a função \texttt{EstimarCanalMS} possui um parâmetro booleano chamado $Quantizar$ que define se o resultado da transmissão é quantizado antes de ser utilizado na equação de mínimos quadrados. 
-
-O estimador AQN é uma consequência do estimador proposto para o caso específico de $\tau=K$, como é descrito na equação~\cite[eq]{li.ets} 
-, e a equação de transmissão é a mesma vista na eq.~\eqref{eq:transmissao_mimo}. 
-
-Para esse trabalho, são observados os desempenhos de três estimadores: Estimador de mínimos quadrados, Estimador AQN e o estimador proposto por~\cite{li.etal_2017a}. 
-
-O estimador de mínimos quadrados simplesmente resolve o sistema de equações definido por~\cite[eq. 4]{li.etal_2017a}. Ele é definido pela função \texttt{EstimarCanalMS} e está definido no algoritmo~\ref{alg:estimador_ms}. Já que esse estimador serve apenas para o caso de MIMO convencional, a função \texttt{EstimarCanalMS} possui um parâmetro booleano chamado $Quantizar$ que define se o resultado da transmissão é quantizado antes de ser utilizado na equação de mínimos quadrados. 
-
-O estimador AQN é uma consequência do estimador proposto para o caso específico de $\tau=K$, como é descrito na equação~\cite[eq]{li.ets} 
-, e a equação de transmissão é a mesma vista na eq.~\eqref{eq:transmissao_mimo}. 
-
-Para esse trabalho, são observados os desempenhos de três estimadores: Estimador de mínimos quadrados, Estimador AQN e o estimador proposto por~\cite{li.etal_2017a}. 
-
-O estimador de mínimos quadrados simplesmente resolve o sistema de equações definido por~\cite[eq. 4]{li.etal_2017a}. Ele é definido pela função \texttt{EstimarCanalMS} e está definido no algoritmo~\ref{alg:estimador_ms}. Já que esse estimador serve apenas para o caso de MIMO convencional, a função \texttt{EstimarCanalMS} possui um parâmetro booleano chamado $Quantizar$ que define se o resultado da transmissão é quantizado antes de ser utilizado na equação de mínimos quadrados. 
-
-O estimador AQN é uma consequência do estimador proposto para o caso específico de $\tau=K$, como é descrito na equação~\cite[eq]{li.ets} 
 
 \section{Capacidade do canal}
 \label{sec:capacidade_canal}
 
-\bibliographystyle{ieee} % We choose the "plain" reference style
-\bibliography{Transmissão Digital}
+
+\section{Considerações finais}
+\label{sec:consideracoes_finais}
+
+\printbibliography
 
 \end{document}
