@@ -196,7 +196,7 @@ Como tanto o modelo de canal quanto o ruído não assume correlação espacial e
 
 O experimento para esitmação de canal é descrito pelo algoritmo~\ref{alg:estimacao_canal}. O experimento faz uma simulação de Monte Carlo de $Repetições$ repetições que gera um canal e utiliza todosos estimadores, para cada valor de SNR, para estimar o canal e medir o erro médio quadrático normalizado para cada estimação.  
 
-No experimento, é utilizado a função \texttt{CalcularEstimador} que que representa a operação de realizar uma transmissão de $\tau$ pilotos através do canal real $H$ com um valor específico
+No experimento, é utilizado a função \texttt{CalcularEstimador} que que representa o conjunto de operações para calcular o estimador com base na transmissão  
 
 \begin{algorithm}
     \label{alg:estimacao_canal}
@@ -207,11 +207,11 @@ No experimento, é utilizado a função \texttt{CalcularEstimador} que que repre
         $H\gets$\texttt{GerarCanal($m$,$k$)}\;
         \For{$SNR$ em $ListaSNR$}{
             \For{$estimador$ em $ListaEstimadores$}{
-                $Y_p\gets$ \texttt{TransmitirMIMO}($H$,$\Phi$)\;
+                $Y_p\gets$ \texttt{TransmitirMIMO}($R_p$,$\Phi$)\;
                 $Quantizar \gets$ \texttt{QuantizarTransmissao}($estimador$)\;
-                \IfElse{$Quantizar$}{
+                \If{$Quantizar$}{
                     $R_p \gets$ \texttt{Quantizar}($Y_p$)\;
-                }{
+                }\Else{
                     $R_p \gets Y_p$\;
                 }
                 $\hat{H}\gets$ \texttt{CalcularEstimador($H$,$\Phi$,$estimador$)}\;
