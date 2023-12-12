@@ -11,7 +11,7 @@ doc: $(DOC:.tex=.pdf)
 
 %.pdf: %.tex
 	$(PDFLATEX) $<
-	@egrep -q $(RERUNBIB) $*.log && bibtex $* && $(PDFLATEX) $<; true
+	@egrep -q $(RERUNBIB) $*.log && biber $* && $(PDFLATEX) $<; true
 	@egrep -q $(RERUN) $*.log && $(PDFLATEX) $<; true
 	@egrep -q $(RERUN) $*.log && $(PDFLATEX) $<; true
 
